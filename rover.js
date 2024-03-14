@@ -6,49 +6,36 @@ class Rover {
       this.generatorWatts = 110;
    }
    receiveMessage(message) {
-      let results = {
-         completed: true,
-         roverStatus: {
-            mode: message.commands[0].value,
-            generatorWatts: this.generatorWatts,
-            position: this.position
-         }
-      };
+
+      let results = [];
       for (let i = 0; i < message.commands.length; i++) {
-         if (message.commands[i].commnandType === 'MODE_CHANGE') {
+         let result = {};
+         if (message.commands[i].commandType === 'MODE_CHANGE') {
+            result.completed = true;
+            this.mode = message.commands[i].value;
          } 
-         else if (message.commands[i].commnandType === 'STATUS_CHECK') {
-            results.completed = true;
-            results.roverStatus.mode = message.commands[i].value;
-            results.roverStatus.generatorWatts = this.generatorWatts;
-            results.roverStatus.position = this.position;
+         else if (message.commands[i].commandType === 'STATUS_CHECK') {
+            result.completed = true;
+
+            result.roverStatus = {};
+
+            result.roverStatus.mode = this.mode;
+            result.roverStatus.generatorWatts = this.generatorWatts;
+            result.roverStatus.position = this.position;
          } 
-         else if (message.commands[i].commnandType === 'MOVE') {
+         else if (message.commands[i].commandType === 'MOVE') {
+            if (this.mode === 'LOW_POWER') {
+               result.completed = false;
+            }
+            else if (this.mode === 'NORMAL') {
+               result.completed = true;
+               this.position = message.commands[i].value;
+            }
          }
-      }
-      // let results = {
-      //    completed: true,
-      //    roverStatus: {
-      //       mode: message.commands[0].value,
-      //       generatorWatts: this.generatorWatts,
-      //       position: this.position
-      //    }
-      // };
-      //console.log("resultsObject: ", resultsObj);
-      console.log("message:\n", message);
-      console.log("message commands:\n", message.commands);
-      console.log("message command values:\n", message.commands[0].value);
-      
-
-      let resultsArray = [];
-      for (let i = 0; i < message.commands.length; i++) {
-         resultsArray.push(results);
+         results.push(result);
       };
-      console.log("results: ", resultsArray);
-      // console.log("resultsObject: ", resultsObj);
 
-
-      return {message: message.name, results: resultsArray};
+      return {message: message.name, results: results};
    }
 }
 
